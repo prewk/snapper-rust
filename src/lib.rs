@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate serde_derive;
+
 mod contracts;
 mod tools;
 mod book_keeper;

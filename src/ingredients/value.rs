@@ -9,7 +9,9 @@ impl Value {
     pub fn new() -> Value { Value {} }
 }
 
-impl Ingredient for Value {
+struct ValueConfig {}
+
+impl Ingredient<ValueConfig> for Value {
     /// Get all dependencies of this ingredient
     fn get_deps(&self, value: FieldValue, row: Row, circular: bool) -> std::vec::Vec<Dep> {
         vec![]
@@ -29,6 +31,17 @@ impl Ingredient for Value {
     fn get_required_extra_fields(&self) -> std::vec::Vec<std::string::String> {
         vec![]
     }
+
+    /// Turn the ingredient into a config
+    fn to_config(&self) -> IngredientConfig<ValueConfig> {
+        IngredientConfig {
+            type_: "VALUE",
+            config: ValueConfig {}
+        }
+    }
+
+    /// Create the ingredient from a config
+    fn from_config(config: IngredientConfig<ValueConfig>) -> Self { Value {} }
 }
 
 #[cfg(test)]

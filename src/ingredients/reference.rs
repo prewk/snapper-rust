@@ -5,16 +5,22 @@ use std::vec::Vec;
 use std::string::String;
 use std::collections::HashMap;
 use tools::*;
+extern crate serde_json;
 
 pub struct Reference {
-    etype: EntityType,
+    type_: EntityType,
     optional_vals: Vec<FieldValue>
 }
 
+struct ReferenceConfig {
+    type_: String,
+    optional_values: Vec<serde_json::Value>,
+}
+
 impl Reference {
-    pub fn new(etype: EntityType) -> Reference {
+    pub fn new(type_: EntityType) -> Reference {
         Reference {
-            etype,
+            type_,
             optional_vals: vec![]
         }
     }
@@ -27,7 +33,7 @@ impl Reference {
     }
 }
 
-impl Ingredient for Reference {
+impl Ingredient<ReferenceConfig> for Reference {
     /// Get all dependencies of this ingredient
     fn get_deps(&self, value: FieldValue, row: Row, circular: bool) -> Vec<Dep> {
         for v in &self.optional_vals {
@@ -37,7 +43,7 @@ impl Ingredient for Reference {
         }
 
         field_value_to_id(value)
-            .map(|v| vec![(self.etype.clone(), v)])
+            .map(|v| vec![(self.type_.clone(), v)])
             .unwrap_or(vec![])
     }
 
@@ -50,7 +56,7 @@ impl Ingredient for Reference {
         }
 
         field_value_to_id(value)
-            .and_then(|id| books.resolve_id(self.etype.clone(), id, false))
+            .and_then(|id| books.resolve_id(self.type_.clone(), id, false))
             .map(id_to_field_value)
     }
 
@@ -63,15 +69,40 @@ impl Ingredient for Reference {
         }
 
         field_value_to_id(value)
-            .and_then(|id| books.resolve_id(self.etype.clone(), id.clone(), false)
+            .and_then(|id| books.resolve_id(self.type_.clone(), id.clone(), false)
                 .map(|resolved| (id_to_field_value(resolved), id))
             )
-            .map(|(resolved, id)| DeserializedValue::new(vec![(self.etype.clone(), id)], resolved))
+            .map(|(resolved, id)| DeserializedValue::new(vec![(self.type_.clone(), id)], resolved))
     }
 
     /// Should return an array with fields required to be able to UPDATE a row
     fn get_required_extra_fields(&self) -> Vec<String> {
         vec![]
+    }
+
+    /// Turn the ingredient into a config
+    fn to_config(&self) -> IngredientConfig<ReferenceConfig> {
+        IngredientConfig {
+            type_: "REF",
+            config: ReferenceConfig {
+                type_: self.type_.clone(),
+                optional_values: self.optional_vals
+                    .iter()
+                    .map(field_value_to_serde_value)
+                    .collect(),
+            }
+        }
+    }
+
+    /// Create the ingredient from a config
+    fn from_config(config: IngredientConfig<ReferenceConfig>) -> Self {
+        Reference {
+            type_: config.config.type_.to_string(),
+            optional_vals: config.config.optional_values
+                .iter()
+                .map(serde_value_to_field_value)
+                .collect(),
+        }
     }
 }
 
@@ -86,7 +117,7 @@ mod test {
     }
 
     impl BookKeeper for BookKeeperMock {
-        fn resolve_id(&self, etype: EntityType, id: Id, authoritative: bool) -> Option<Id> {
+        fn resolve_id(&self, type_: EntityType, id: Id, authoritative: bool) -> Option<Id> {
             Some(Id::Uuid(String::from("MOCK")))
         }
         fn reset(&mut self) { unimplemented!() }

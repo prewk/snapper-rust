@@ -1,3 +1,5 @@
+extern crate serde_json;
+
 use std::string::String;
 use contracts::*;
 
@@ -13,6 +15,23 @@ pub fn id_to_field_value(id: Id) -> FieldValue {
     match (id) {
         Id::Int(v) => FieldValue::Int(v as i64),
         Id::Uuid(s) => FieldValue::String(s.clone())
+    }
+}
+
+pub fn field_value_to_serde_value(val: &FieldValue) -> serde_json::Value {
+    match val {
+        &FieldValue::Null => serde_json::Value::Null,
+        &FieldValue::Int(v) => serde_json::Value::from(v),
+        &FieldValue::String(ref s) => serde_json::Value::String(s.clone()),
+    }
+}
+
+pub fn serde_value_to_field_value(val: &serde_json::Value) -> FieldValue {
+    match val {
+        &serde_json::Value::Null => FieldValue::Null,
+        &serde_json::Value::Number(ref v) => FieldValue::Int(v.as_i64().unwrap_or(0 as i64)),
+        &serde_json::Value::String(ref s) => FieldValue::String(s.clone()),
+        _ => FieldValue::Null,
     }
 }
 
