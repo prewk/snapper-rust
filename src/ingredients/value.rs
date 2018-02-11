@@ -1,7 +1,9 @@
 use ingredients::ingredient::*;
 use contracts::*;
 use book_keeper::*;
-use std;
+use std::vec::Vec;
+use std::string::String;
+use std::collections::HashMap;
 
 pub struct Value {}
 
@@ -14,7 +16,7 @@ struct ValueConfig {}
 
 impl Ingredient<ValueConfig> for Value {
     /// Get all dependencies of this ingredient
-    fn get_deps(&self, value: FieldValue, row: Row, circular: bool) -> std::vec::Vec<Dep> {
+    fn get_deps(&self, value: FieldValue, row: Row, circular: bool) -> Vec<Dep> {
         vec![]
     }
 
@@ -29,7 +31,7 @@ impl Ingredient<ValueConfig> for Value {
     }
 
     /// Should return an array with fields required to be able to UPDATE a row
-    fn get_required_extra_fields(&self) -> std::vec::Vec<std::string::String> {
+    fn get_required_extra_fields(&self) -> Vec<String> {
         vec![]
     }
 
@@ -64,9 +66,9 @@ mod tests {
     fn it_gets_deps() {
         let v = Value::new();
 
-        assert_eq!(0, v.get_deps(FieldValue::Null, std::collections::HashMap::new(), false).len());
-        assert_eq!(0, v.get_deps(FieldValue::Int(123), std::collections::HashMap::new(), false).len());
-        assert_eq!(0, v.get_deps(FieldValue::String(std::string::String::from("Foo")), std::collections::HashMap::new(), false).len());
+        assert_eq!(0, v.get_deps(FieldValue::Null, HashMap::new(), false).len());
+        assert_eq!(0, v.get_deps(FieldValue::Int(123), HashMap::new(), false).len());
+        assert_eq!(0, v.get_deps(FieldValue::String(String::from("Foo")), HashMap::new(), false).len());
     }
 
     #[test]
@@ -74,7 +76,7 @@ mod tests {
         let v = Value::new();
         let b = BookKeeperMock::new();
 
-        assert_eq!(Some(FieldValue::Int(123)), v.serialize(FieldValue::Int(123), std::collections::HashMap::new(), &b, false));
+        assert_eq!(Some(FieldValue::Int(123)), v.serialize(FieldValue::Int(123), HashMap::new(), &b, false));
     }
 
     #[test]
@@ -82,7 +84,7 @@ mod tests {
         let v = Value::new();
         let b = BookKeeperMock::new();
 
-        let o = v.deserialize(FieldValue::Int(123), std::collections::HashMap::new(), &b);
+        let o = v.deserialize(FieldValue::Int(123), HashMap::new(), &b);
 
         assert!(o.is_some());
         let d = o.unwrap();
