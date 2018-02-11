@@ -9,6 +9,7 @@ impl Value {
     pub fn new() -> Value { Value {} }
 }
 
+#[derive(Serialize, Deserialize)]
 struct ValueConfig {}
 
 impl Ingredient<ValueConfig> for Value {
@@ -95,5 +96,22 @@ mod tests {
         let v = Value::new();
 
         assert_eq!(0, v.get_required_extra_fields().len())
+    }
+
+    #[test]
+    fn it_creates_a_config() {
+        let v = Value::new();
+
+        let config = v.to_config();
+
+        assert_eq!("VALUE", config.type_);
+    }
+
+    #[test]
+    fn it_creates_from_config() {
+        let v = Value::from_config(IngredientConfig {
+            type_: "VALUE",
+            config: ValueConfig {}
+        });
     }
 }

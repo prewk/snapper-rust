@@ -1,3 +1,5 @@
+extern crate serde_json;
+
 use ingredients::ingredient::*;
 use contracts::*;
 use book_keeper::*;
@@ -5,13 +7,13 @@ use std::vec::Vec;
 use std::string::String;
 use std::collections::HashMap;
 use tools::*;
-extern crate serde_json;
 
 pub struct Reference {
     type_: EntityType,
     optional_vals: Vec<FieldValue>
 }
 
+#[derive(Serialize, Deserialize)]
 struct ReferenceConfig {
     type_: String,
     optional_values: Vec<serde_json::Value>,
@@ -184,5 +186,31 @@ mod test {
         assert_eq!(1, deserialized1.deps().len());
         assert_eq!((String::from("foos"), Id::Int(123)), deserialized1.deps()[0]);
         assert_eq!(FieldValue::String(String::from("MOCK")), deserialized1.value());
+    }
+
+    #[test]
+    fn it_creates_a_config()
+    {
+        let mut r = Reference::new(String::from("foos"));
+        r.optional(vec![FieldValue::Null]);
+
+        let config = r.to_config();
+
+        assert_eq!("REF", config.type_);
+        assert_eq!(String::from("foos"), config.config.type_);
+        assert_eq!(1, config.config.optional_values.len());
+        assert_eq!(serde_json::Value::Null, config.config.optional_values[0]);
+    }
+
+    #[test]
+    fn it_creates_from_config()
+    {
+        let r = Reference::from_config(IngredientConfig {
+            type_: "REF",
+            config: ReferenceConfig {
+                type_: String::from("foos"),
+                optional_values: vec![serde_json::Value::Null],
+            }
+        });
     }
 }
