@@ -10,7 +10,7 @@ use tools::*;
 
 pub struct Reference {
     type_: EntityType,
-    optional_vals: Vec<FieldValue>
+    optional_values: Vec<FieldValue>
 }
 
 #[derive(Serialize, Deserialize)]
@@ -23,13 +23,13 @@ impl Reference {
     pub fn new(type_: EntityType) -> Reference {
         Reference {
             type_,
-            optional_vals: vec![]
+            optional_values: vec![]
         }
     }
 
     /// Specify which values should be treated as optional
-    pub fn optional(&mut self, optional_vals: Vec<FieldValue>) -> &mut Self {
-        self.optional_vals = optional_vals.clone();
+    pub fn optional(&mut self, optional_values: Vec<FieldValue>) -> &mut Self {
+        self.optional_values = optional_values.clone();
 
         self
     }
@@ -38,7 +38,7 @@ impl Reference {
 impl Ingredient<ReferenceConfig> for Reference {
     /// Get all dependencies of this ingredient
     fn get_deps(&self, value: FieldValue, row: Row, circular: bool) -> Vec<Dep> {
-        for v in &self.optional_vals {
+        for v in &self.optional_values {
             if *v == value {
                 return vec![];
             }
@@ -51,7 +51,7 @@ impl Ingredient<ReferenceConfig> for Reference {
 
     /// Let the ingredient determine the value of the field to store in a serialization
     fn serialize(&self, value: FieldValue, row: Row, books: &BookKeeper, circular: bool) -> Option<FieldValue> {
-        for v in &self.optional_vals {
+        for v in &self.optional_values {
             if *v == value {
                 return Some(value);
             }
@@ -64,7 +64,7 @@ impl Ingredient<ReferenceConfig> for Reference {
 
     /// Let the ingredient determine the value of the field to insert into the database when deserializing
     fn deserialize(&self, value: FieldValue, row: Row, books: &BookKeeper) -> Option<DeserializedValue> {
-        for v in &self.optional_vals {
+        for v in &self.optional_values {
             if *v == value {
                 return Some(DeserializedValue::new(vec![], value));
             }
@@ -88,7 +88,7 @@ impl Ingredient<ReferenceConfig> for Reference {
             type_: "REF",
             config: ReferenceConfig {
                 type_: self.type_.clone(),
-                optional_values: self.optional_vals
+                optional_values: self.optional_values
                     .iter()
                     .map(field_value_to_serde_value)
                     .collect(),
@@ -100,7 +100,7 @@ impl Ingredient<ReferenceConfig> for Reference {
     fn from_config(config: IngredientConfig<ReferenceConfig>) -> Self {
         Reference {
             type_: config.config.type_.to_string(),
-            optional_vals: config.config.optional_values
+            optional_values: config.config.optional_values
                 .iter()
                 .map(serde_value_to_field_value)
                 .collect(),
