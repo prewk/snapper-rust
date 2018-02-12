@@ -1,8 +1,10 @@
+extern crate serde_json;
+
 use std::string::String;
 use std::vec::Vec;
 use std::collections::HashMap;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub enum FieldValue {
     Null,
     Int(i64),
