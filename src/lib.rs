@@ -11,5 +11,6 @@ mod ingredients {
     pub mod value;
     pub mod reference;
     pub mod raw;
+    pub mod circular;
 }
 mod recipe;

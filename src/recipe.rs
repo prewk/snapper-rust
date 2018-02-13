@@ -1,6 +1,7 @@
 use ingredients::value::*;
 use ingredients::raw::*;
 use ingredients::reference::*;
+use ingredients::circular::*;
 use std::string::String;
 use std::vec::Vec;
 use std::collections::HashMap;
@@ -20,6 +21,7 @@ enum Ingredient {
     Value(Value),
     Raw(Raw),
     Ref(Reference),
+    Circular(Circular),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -54,6 +56,10 @@ mod tests {
                 "foo_id": { "type": "REF", "config": {
                     "type": "foos",
                     "optional_values": []
+                } },
+                "bar_id": { "type": "CIRCULAR", "config": {
+                    "ingredient": { "type": "REF", "config": { "type": "bars", "optional_values": [null] } },
+                    "fallback": { "type": "RAW", "config": { "value": null } }
                 } }
             }
         }"#;
