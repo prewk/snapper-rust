@@ -26,7 +26,7 @@ impl MorphMapper {
     pub fn resolve(&self, morph_type: &FieldValue, value: &FieldValue, books: &BookKeeper) -> Option<Id> {
         self.morph_map.get(morph_type)
             .and_then(|etype: &EntityType| {
-                field_value_to_id(morph_type.clone())
+                field_value_to_id(value.clone())
                     .and_then(|id| {
                         books.resolve_id(etype.clone(), id, false)
                     })
@@ -154,10 +154,10 @@ mod test {
     #[test]
     fn it_gets_deps() {
         let mut morph_map: HashMap<FieldValue, EntityType> = HashMap::new();
-        morph_map.insert(FieldValue::String(String::from("BAR")), String::from("foos"));
-        morph_map.insert(FieldValue::String(String::from("BAZ")), String::from("bars"));
+        morph_map.insert(FieldValue::String(String::from("BAR")), String::from("bars"));
+        morph_map.insert(FieldValue::String(String::from("BAZ")), String::from("bazes"));
 
-        let mut m = Morph::new(String::from("fooable_type"), morph_map, vec![]);
+        let m = Morph::new(String::from("fooable_type"), morph_map, vec![]);
 
         let mut row: Row = HashMap::new();
         row.insert("fooable_type".to_string(), FieldValue::String(String::from("BAR")));
@@ -173,5 +173,61 @@ mod test {
         let deps3 = m.get_deps(FieldValue::Int(123), HashMap::new(), false);
 
         assert_eq!(0, deps3.len());
+    }
+
+    #[test]
+    fn it_serializes()
+    {
+        let b = BookKeeperMock::new();
+
+        let mut morph_map: HashMap<FieldValue, EntityType> = HashMap::new();
+        morph_map.insert(FieldValue::String(String::from("BAR")), String::from("bars"));
+        morph_map.insert(FieldValue::String(String::from("BAZ")), String::from("bazes"));
+
+        let mut m = Morph::new(String::from("fooable_type"), morph_map, vec![]);
+
+        let mut row: Row = HashMap::new();
+        row.insert("fooable_type".to_string(), FieldValue::String(String::from("BAR")));
+
+        let o1 = m.snapper_serialize(FieldValue::Int(123), row.clone(), &b, false);
+
+        assert!(o1.is_some());
+        let serialized1 = o1.unwrap();
+
+        assert_eq!(FieldValue::String(String::from("MOCK")), serialized1);
+
+        let o2 = m.snapper_serialize(FieldValue::Null, row.clone(), &b, false);
+
+        assert!(o2.is_none());
+
+        m.optional(vec![FieldValue::Int(123)]);
+
+        let o2 = m.snapper_serialize(FieldValue::Int(123), row.clone(), &b, false);
+
+        assert!(o2.is_none());
+    }
+
+    #[test]
+    fn it_deserializes()
+    {
+        let b = BookKeeperMock::new();
+
+        let mut morph_map: HashMap<FieldValue, EntityType> = HashMap::new();
+        morph_map.insert(FieldValue::String(String::from("BAR")), String::from("bars"));
+        morph_map.insert(FieldValue::String(String::from("BAZ")), String::from("bazes"));
+
+        let m = Morph::new(String::from("fooable_type"), morph_map, vec![]);
+
+        let mut row: Row = HashMap::new();
+        row.insert("fooable_type".to_string(), FieldValue::String(String::from("BAR")));
+
+        let o1 = m.snapper_deserialize(FieldValue::Int(123), row.clone(), &b);
+
+        assert!(o1.is_some());
+        let deserialized1 = o1.unwrap();
+
+        assert_eq!(1, deserialized1.deps().len());
+        assert_eq!((String::from("bars"), Id::Uuid(String::from("MOCK"))), deserialized1.deps()[0]);
+        assert_eq!(FieldValue::Int(123), deserialized1.value());
     }
 }
