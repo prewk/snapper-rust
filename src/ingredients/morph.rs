@@ -16,7 +16,7 @@ impl MorphMapper {
     pub fn get_deps(&self, morph_type: &FieldValue, value: &FieldValue) -> Vec<Dep> {
         self.morph_map.get(morph_type)
             .and_then(|etype: &EntityType| {
-                field_value_to_id(morph_type.clone())
+                field_value_to_id(value.clone())
                     .map(|id| vec![(etype.clone(), id)])
             })
             .unwrap_or(vec![])
@@ -131,5 +131,47 @@ impl Ingredient for Morph {
     /// Should return an array with fields required to be able to UPDATE a row
     fn get_required_extra_fields(&self) -> Vec<String> {
         vec![self.config.field.clone()]
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    struct BookKeeperMock {}
+
+    impl BookKeeperMock {
+        pub fn new() -> BookKeeperMock { BookKeeperMock {} }
+    }
+
+    impl BookKeeper for BookKeeperMock {
+        fn resolve_id(&self, _type_: EntityType, _id: Id, _authoritative: bool) -> Option<Id> {
+            Some(Id::Uuid(String::from("MOCK")))
+        }
+        fn reset(&mut self) { unimplemented!() }
+    }
+
+    #[test]
+    fn it_gets_deps() {
+        let mut morph_map: HashMap<FieldValue, EntityType> = HashMap::new();
+        morph_map.insert(FieldValue::String(String::from("BAR")), String::from("foos"));
+        morph_map.insert(FieldValue::String(String::from("BAZ")), String::from("bars"));
+
+        let mut m = Morph::new(String::from("fooable_type"), morph_map, vec![]);
+
+        let mut row: Row = HashMap::new();
+        row.insert("fooable_type".to_string(), FieldValue::String(String::from("BAR")));
+
+        let deps1 = m.get_deps(FieldValue::Int(123), row.clone(), false);
+
+        assert_eq!(1, deps1.len());
+
+        let deps2 = m.get_deps(FieldValue::Null, row.clone(), false);
+
+        assert_eq!(0, deps2.len());
+
+        let deps3 = m.get_deps(FieldValue::Int(123), HashMap::new(), false);
+
+        assert_eq!(0, deps3.len());
     }
 }
