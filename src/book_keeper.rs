@@ -1,4 +1,3 @@
-use std;
 use contracts::*;
 
 pub trait BookKeeper {

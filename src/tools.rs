@@ -1,6 +1,5 @@
 extern crate serde_json;
 
-use std::string::String;
 use contracts::*;
 
 pub fn field_value_to_id(val: FieldValue) -> Option<Id> {
@@ -12,7 +11,7 @@ pub fn field_value_to_id(val: FieldValue) -> Option<Id> {
 }
 
 pub fn id_to_field_value(id: Id) -> FieldValue {
-    match (id) {
+    match id {
         Id::Int(v) => FieldValue::Int(v as i64),
         Id::Uuid(s) => FieldValue::String(s.clone())
     }

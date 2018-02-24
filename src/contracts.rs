@@ -4,7 +4,7 @@ use std::string::String;
 use std::vec::Vec;
 use std::collections::HashMap;
 
-#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize, Eq, Hash)]
 pub enum FieldValue {
     Null,
     Int(i64),
