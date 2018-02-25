@@ -2,6 +2,14 @@ extern crate serde_json;
 
 use contracts::*;
 
+pub fn field_value_to_string(val: &FieldValue) -> String {
+    match val {
+        &FieldValue::Null => "".to_string(),
+        &FieldValue::Int(v) => v.to_string(),
+        &FieldValue::String(ref s) => s.clone(),
+    }
+}
+
 pub fn field_value_to_id(val: &FieldValue) -> Option<Id> {
     match val {
         &FieldValue::Null => None,
