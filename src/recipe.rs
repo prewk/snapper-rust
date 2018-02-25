@@ -2,10 +2,9 @@ use ingredients::value::*;
 use ingredients::raw::*;
 use ingredients::reference::*;
 use ingredients::circular::*;
+use ingredients::morph::*;
 use std::string::String;
-use std::vec::Vec;
 use std::collections::HashMap;
-use serde_json::Error;
 use serde_json;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -22,6 +21,7 @@ enum Ingredient {
     Raw(Raw),
     Ref(Reference),
     Circular(Circular),
+    Morph(Morph),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -60,6 +60,15 @@ mod tests {
                 "bar_id": { "type": "CIRCULAR", "config": {
                     "ingredient": { "type": "REF", "config": { "type": "bars", "optional_values": [null] } },
                     "fallback": { "type": "RAW", "config": { "value": null } }
+                } },
+                "bazable_type": { "type": "VALUE", "config": {} },
+                "bazable_id": { "type": "MORPH", "config": {
+                    "field": "bazable_type",
+                    "morph_mapper": { "morph_map": {
+                        "FOO": "foos",
+                        "BAR": "bars"
+                    } },
+                    "optional_values": []
                 } }
             }
         }"#;

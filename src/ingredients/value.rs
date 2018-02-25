@@ -21,18 +21,18 @@ impl Value {
 
 impl Ingredient for Value {
     /// Get all dependencies of this ingredient
-    fn get_deps(&self, _value: FieldValue, _row: Row, _circular: bool) -> Vec<Dep> {
+    fn get_deps(&self, _value: &FieldValue, _row: &Row, _circular: bool) -> Vec<Dep> {
         vec![]
     }
 
     /// Let the ingredient determine the value of the field to store in a serialization
-    fn snapper_serialize(&self, value: FieldValue, _row: Row, _books: &BookKeeper, _circular: bool) -> Option<FieldValue> {
-        Some(value)
+    fn snapper_serialize(&self, value: &FieldValue, _row: &Row, _books: &BookKeeper, _circular: bool) -> Option<FieldValue> {
+        Some(value.clone())
     }
 
     /// Let the ingredient determine the value of the field to insert into the database when deserializing
-    fn snapper_deserialize(&self, value: FieldValue, _row: Row, _books: &BookKeeper) -> Option<DeserializedValue> {
-        Some(DeserializedValue::new(vec![], value))
+    fn snapper_deserialize(&self, value: &FieldValue, _row: &Row, _books: &BookKeeper) -> Option<DeserializedValue> {
+        Some(DeserializedValue::new(vec![], value.clone()))
     }
 
     /// Should return an array with fields required to be able to UPDATE a row
@@ -60,9 +60,9 @@ mod tests {
     fn it_gets_deps() {
         let v = Value::new();
 
-        assert_eq!(0, v.get_deps(FieldValue::Null, HashMap::new(), false).len());
-        assert_eq!(0, v.get_deps(FieldValue::Int(123), HashMap::new(), false).len());
-        assert_eq!(0, v.get_deps(FieldValue::String(String::from("Foo")), HashMap::new(), false).len());
+        assert_eq!(0, v.get_deps(&FieldValue::Null, &HashMap::new(), false).len());
+        assert_eq!(0, v.get_deps(&FieldValue::Int(123), &HashMap::new(), false).len());
+        assert_eq!(0, v.get_deps(&FieldValue::String(String::from("Foo")), &HashMap::new(), false).len());
     }
 
     #[test]
@@ -70,7 +70,7 @@ mod tests {
         let v = Value::new();
         let b = BookKeeperMock::new();
 
-        assert_eq!(Some(FieldValue::Int(123)), v.snapper_serialize(FieldValue::Int(123), HashMap::new(), &b, false));
+        assert_eq!(Some(FieldValue::Int(123)), v.snapper_serialize(&FieldValue::Int(123), &HashMap::new(), &b, false));
     }
 
     #[test]
@@ -78,7 +78,7 @@ mod tests {
         let v = Value::new();
         let b = BookKeeperMock::new();
 
-        let o = v.snapper_deserialize(FieldValue::Int(123), HashMap::new(), &b);
+        let o = v.snapper_deserialize(&FieldValue::Int(123), &HashMap::new(), &b);
 
         assert!(o.is_some());
         let d = o.unwrap();

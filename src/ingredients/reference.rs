@@ -41,40 +41,40 @@ impl Reference {
 
 impl Ingredient for Reference {
     /// Get all dependencies of this ingredient
-    fn get_deps(&self, value: FieldValue, _row: Row, _circular: bool) -> Vec<Dep> {
+    fn get_deps(&self, value: &FieldValue, _row: &Row, _circular: bool) -> Vec<Dep> {
         for v in &self.config.optional_values {
-            if *v == value {
+            if v == value {
                 return vec![];
             }
         }
 
-        field_value_to_id(value)
+        field_value_to_id(&value)
             .map(|v| vec![(self.config.type_.clone(), v)])
             .unwrap_or(vec![])
     }
 
     /// Let the ingredient determine the value of the field to store in a serialization
-    fn snapper_serialize(&self, value: FieldValue, _row: Row, books: &BookKeeper, _circular: bool) -> Option<FieldValue> {
+    fn snapper_serialize(&self, value: &FieldValue, _row: &Row, books: &BookKeeper, _circular: bool) -> Option<FieldValue> {
         for v in &self.config.optional_values {
-            if *v == value {
-                return Some(value);
+            if v == value {
+                return Some(value.clone());
             }
         }
 
-        field_value_to_id(value)
+        field_value_to_id(&value)
             .and_then(|id| books.resolve_id(self.config.type_.clone(), id, false))
             .map(id_to_field_value)
     }
 
     /// Let the ingredient determine the value of the field to insert into the database when deserializing
-    fn snapper_deserialize(&self, value: FieldValue, _row: Row, books: &BookKeeper) -> Option<DeserializedValue> {
+    fn snapper_deserialize(&self, value: &FieldValue, _row: &Row, books: &BookKeeper) -> Option<DeserializedValue> {
         for v in &self.config.optional_values {
-            if *v == value {
-                return Some(DeserializedValue::new(vec![], value));
+            if v == value {
+                return Some(DeserializedValue::new(vec![], value.clone()));
             }
         }
 
-        field_value_to_id(value)
+        field_value_to_id(&value)
             .and_then(|id| books.resolve_id(self.config.type_.clone(), id.clone(), false)
                 .map(|resolved| (id_to_field_value(resolved), id))
             )
@@ -108,18 +108,18 @@ mod test {
     fn it_gets_deps() {
         let mut r = Reference::new(String::from("foos"), vec![]);
 
-        let deps1 = r.get_deps(FieldValue::Int(123), HashMap::new(), false);
+        let deps1 = r.get_deps(&FieldValue::Int(123), &HashMap::new(), false);
 
         assert_eq!(1, deps1.len());
         assert_eq!((String::from("foos"), Id::Int(123)), deps1[0]);
 
-        let deps2 = r.get_deps(FieldValue::Null, HashMap::new(), false);
+        let deps2 = r.get_deps(&FieldValue::Null, &HashMap::new(), false);
 
         assert_eq!(0, deps2.len());
 
         r.optional(vec![FieldValue::Int(123)]);
 
-        let deps3 = r.get_deps(FieldValue::Int(123), HashMap::new(), false);
+        let deps3 = r.get_deps(&FieldValue::Int(123), &HashMap::new(), false);
 
         assert_eq!(0, deps3.len());
     }
@@ -130,20 +130,20 @@ mod test {
         let mut r = Reference::new(String::from("foos"), vec![]);
         let b = BookKeeperMock::new();
 
-        let o1 = r.snapper_serialize(FieldValue::Int(123), HashMap::new(), &b, false);
+        let o1 = r.snapper_serialize(&FieldValue::Int(123), &HashMap::new(), &b, false);
 
         assert!(o1.is_some());
         let serialized1 = o1.unwrap();
 
         assert_eq!(FieldValue::String(String::from("MOCK")), serialized1);
 
-        let o2 = r.snapper_serialize(FieldValue::Null, HashMap::new(), &b, false);
+        let o2 = r.snapper_serialize(&FieldValue::Null, &HashMap::new(), &b, false);
 
         assert!(o2.is_none());
 
         r.optional(vec![FieldValue::Null]);
 
-        let o3 = r.snapper_serialize(FieldValue::Null, HashMap::new(), &b, false);
+        let o3 = r.snapper_serialize(&FieldValue::Null, &HashMap::new(), &b, false);
 
         assert!(o3.is_some());
         let serialized3 = o3.unwrap();
@@ -157,7 +157,7 @@ mod test {
         let r = Reference::new(String::from("foos"), vec![]);
         let b = BookKeeperMock::new();
 
-        let o1 = r.snapper_deserialize(FieldValue::Int(123), HashMap::new(), &b);
+        let o1 = r.snapper_deserialize(&FieldValue::Int(123), &HashMap::new(), &b);
 
         assert!(o1.is_some());
         let deserialized1 = o1.unwrap();

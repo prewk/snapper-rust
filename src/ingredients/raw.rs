@@ -26,17 +26,17 @@ impl Raw {
 
 impl Ingredient for Raw {
     /// Get all dependencies of this ingredient
-    fn get_deps(&self, _value: FieldValue, _row: Row, _circular: bool) -> Vec<Dep> {
+    fn get_deps(&self, _value: &FieldValue, _row: &Row, _circular: bool) -> Vec<Dep> {
         vec![]
     }
 
     /// Let the ingredient determine the value of the field to store in a serialization
-    fn snapper_serialize(&self, _value: FieldValue, _row: Row, _books: &BookKeeper, _circular: bool) -> Option<FieldValue> {
+    fn snapper_serialize(&self, _value: &FieldValue, _row: &Row, _books: &BookKeeper, _circular: bool) -> Option<FieldValue> {
         Some(self.config.value.clone())
     }
 
     /// Let the ingredient determine the value of the field to insert into the database when deserializing
-    fn snapper_deserialize(&self, _value: FieldValue, _row: Row, _books: &BookKeeper) -> Option<DeserializedValue> {
+    fn snapper_deserialize(&self, _value: &FieldValue, _row: &Row, _books: &BookKeeper) -> Option<DeserializedValue> {
         Some(DeserializedValue::new(vec![], self.config.value.clone()))
     }
 
@@ -65,7 +65,7 @@ mod tests {
     fn it_gets_deps() {
         let r = Raw::new(FieldValue::Int(123));
 
-        assert_eq!(0, r.get_deps(FieldValue::Null, HashMap::new(), false).len());
+        assert_eq!(0, r.get_deps(&FieldValue::Null, &HashMap::new(), false).len());
     }
 
     #[test]
@@ -73,7 +73,7 @@ mod tests {
         let r = Raw::new(FieldValue::Int(123));
         let b = BookKeeperMock::new();
 
-        assert_eq!(Some(FieldValue::Int(123)), r.snapper_serialize(FieldValue::Null, HashMap::new(), &b, false));
+        assert_eq!(Some(FieldValue::Int(123)), r.snapper_serialize(&FieldValue::Null, &HashMap::new(), &b, false));
     }
 
     #[test]
@@ -81,7 +81,7 @@ mod tests {
         let r = Raw::new(FieldValue::Int(123));
         let b = BookKeeperMock::new();
 
-        let o = r.snapper_deserialize(FieldValue::Null, HashMap::new(), &b);
+        let o = r.snapper_deserialize(&FieldValue::Null, &HashMap::new(), &b);
 
         assert!(o.is_some());
         let d = o.unwrap();

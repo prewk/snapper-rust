@@ -16,7 +16,7 @@ impl MorphMapper {
     pub fn get_deps(&self, morph_type: &FieldValue, value: &FieldValue) -> Vec<Dep> {
         self.morph_map.get(morph_type)
             .and_then(|etype: &EntityType| {
-                field_value_to_id(value.clone())
+                field_value_to_id(&value.clone())
                     .map(|id| vec![(etype.clone(), id)])
             })
             .unwrap_or(vec![])
@@ -26,7 +26,7 @@ impl MorphMapper {
     pub fn resolve(&self, morph_type: &FieldValue, value: &FieldValue, books: &BookKeeper) -> Option<Id> {
         self.morph_map.get(morph_type)
             .and_then(|etype: &EntityType| {
-                field_value_to_id(value.clone())
+                field_value_to_id(&value.clone())
                     .and_then(|id| {
                         books.resolve_id(etype.clone(), id, false)
                     })
@@ -50,7 +50,7 @@ struct MorphConfig {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Morph {
+pub struct Morph {
     #[serde(rename="type")]
     type_: String,
     config: MorphConfig,
@@ -94,7 +94,7 @@ impl Morph {
 
 impl Ingredient for Morph {
     /// Get all dependencies of this ingredient
-    fn get_deps(&self, value: FieldValue, row: Row, _circular: bool) -> Vec<Dep> {
+    fn get_deps(&self, value: &FieldValue, row: &Row, _circular: bool) -> Vec<Dep> {
         self.get_morph_type(&value, &row)
             .map(|morph_type| {
                 self.config.morph_mapper.get_deps(&morph_type, &value)
@@ -103,7 +103,7 @@ impl Ingredient for Morph {
     }
 
     /// Let the ingredient determine the value of the field to store in a serialization
-    fn snapper_serialize(&self, value: FieldValue, row: Row, books: &BookKeeper, _circular: bool) -> Option<FieldValue> {
+    fn snapper_serialize(&self, value: &FieldValue, row: &Row, books: &BookKeeper, _circular: bool) -> Option<FieldValue> {
         self.get_morph_type(&value, &row)
             .and_then(|morph_type| {
                 self.config.morph_mapper.resolve(&morph_type, &value, books)
@@ -114,7 +114,7 @@ impl Ingredient for Morph {
     }
 
     /// Let the ingredient determine the value of the field to insert into the database when deserializing
-    fn snapper_deserialize(&self, value: FieldValue, row: Row, books: &BookKeeper) -> Option<DeserializedValue> {
+    fn snapper_deserialize(&self, value: &FieldValue, row: &Row, books: &BookKeeper) -> Option<DeserializedValue> {
         self.get_morph_type(&value, &row)
             .and_then(|morph_type| {
                 let ref_type = self.config.morph_mapper.resolve_type(&morph_type);
@@ -162,15 +162,15 @@ mod test {
         let mut row: Row = HashMap::new();
         row.insert("fooable_type".to_string(), FieldValue::String(String::from("BAR")));
 
-        let deps1 = m.get_deps(FieldValue::Int(123), row.clone(), false);
+        let deps1 = m.get_deps(&FieldValue::Int(123), &row, false);
 
         assert_eq!(1, deps1.len());
 
-        let deps2 = m.get_deps(FieldValue::Null, row.clone(), false);
+        let deps2 = m.get_deps(&FieldValue::Null, &row, false);
 
         assert_eq!(0, deps2.len());
 
-        let deps3 = m.get_deps(FieldValue::Int(123), HashMap::new(), false);
+        let deps3 = m.get_deps(&FieldValue::Int(123), &HashMap::new(), false);
 
         assert_eq!(0, deps3.len());
     }
@@ -189,20 +189,20 @@ mod test {
         let mut row: Row = HashMap::new();
         row.insert("fooable_type".to_string(), FieldValue::String(String::from("BAR")));
 
-        let o1 = m.snapper_serialize(FieldValue::Int(123), row.clone(), &b, false);
+        let o1 = m.snapper_serialize(&FieldValue::Int(123), &row, &b, false);
 
         assert!(o1.is_some());
         let serialized1 = o1.unwrap();
 
         assert_eq!(FieldValue::String(String::from("MOCK")), serialized1);
 
-        let o2 = m.snapper_serialize(FieldValue::Null, row.clone(), &b, false);
+        let o2 = m.snapper_serialize(&FieldValue::Null, &row, &b, false);
 
         assert!(o2.is_none());
 
         m.optional(vec![FieldValue::Int(123)]);
 
-        let o2 = m.snapper_serialize(FieldValue::Int(123), row.clone(), &b, false);
+        let o2 = m.snapper_serialize(&FieldValue::Int(123), &row, &b, false);
 
         assert!(o2.is_none());
     }
@@ -221,7 +221,7 @@ mod test {
         let mut row: Row = HashMap::new();
         row.insert("fooable_type".to_string(), FieldValue::String(String::from("BAR")));
 
-        let o1 = m.snapper_deserialize(FieldValue::Int(123), row.clone(), &b);
+        let o1 = m.snapper_deserialize(&FieldValue::Int(123), &row, &b);
 
         assert!(o1.is_some());
         let deserialized1 = o1.unwrap();

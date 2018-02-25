@@ -3,7 +3,6 @@ use contracts::*;
 use book_keeper::*;
 use std::vec::Vec;
 use std::string::String;
-use std::collections::HashMap;
 use ingredients::raw::Raw;
 use ingredients::reference::Reference;
 use ingredients::value::Value;
@@ -43,43 +42,43 @@ impl Circular {
 
 impl Ingredient for Circular {
     /// Get all dependencies of this ingredient
-    fn get_deps(&self, value: FieldValue, row: Row, circular: bool) -> Vec<Dep> {
+    fn get_deps(&self, value: &FieldValue, row: &Row, circular: bool) -> Vec<Dep> {
         match circular {
             true => match &self.config.ingredient {
-                &CircularIngredient::Value(ref v) => v.get_deps(value, row, false),
-                &CircularIngredient::Raw(ref r) => r.get_deps(value, row, false),
-                &CircularIngredient::Ref(ref r) => r.get_deps(value, row, false),
+                &CircularIngredient::Value(ref v) => v.get_deps(&value, &row, false),
+                &CircularIngredient::Raw(ref r) => r.get_deps(&value, &row, false),
+                &CircularIngredient::Ref(ref r) => r.get_deps(&value, &row, false),
             },
             false => match &self.config.fallback {
-                &CircularIngredient::Value(ref v) => v.get_deps(value, row, false),
-                &CircularIngredient::Raw(ref r) => r.get_deps(value, row, false),
-                &CircularIngredient::Ref(ref r) => r.get_deps(value, row, false),
+                &CircularIngredient::Value(ref v) => v.get_deps(&value, &row, false),
+                &CircularIngredient::Raw(ref r) => r.get_deps(&value, &row, false),
+                &CircularIngredient::Ref(ref r) => r.get_deps(&value, &row, false),
             },
         }
     }
 
     /// Let the ingredient determine the value of the field to store in a serialization
-    fn snapper_serialize(&self, value: FieldValue, row: Row, books: &BookKeeper, circular: bool) -> Option<FieldValue> {
+    fn snapper_serialize(&self, value: &FieldValue, row: &Row, books: &BookKeeper, circular: bool) -> Option<FieldValue> {
         match circular {
             true => match &self.config.ingredient {
-                &CircularIngredient::Value(ref v) => v.snapper_serialize(value, row, books, false),
-                &CircularIngredient::Raw(ref r) => r.snapper_serialize(value, row, books, false),
-                &CircularIngredient::Ref(ref r) => r.snapper_serialize(value, row, books, false),
+                &CircularIngredient::Value(ref v) => v.snapper_serialize(&value, &row, books, false),
+                &CircularIngredient::Raw(ref r) => r.snapper_serialize(&value, &row, books, false),
+                &CircularIngredient::Ref(ref r) => r.snapper_serialize(&value, &row, books, false),
             },
             false => match &self.config.fallback {
-                &CircularIngredient::Value(ref v) => v.snapper_serialize(value, row, books, false),
-                &CircularIngredient::Raw(ref r) => r.snapper_serialize(value, row, books, false),
-                &CircularIngredient::Ref(ref r) => r.snapper_serialize(value, row, books, false),
+                &CircularIngredient::Value(ref v) => v.snapper_serialize(&value, &row, books, false),
+                &CircularIngredient::Raw(ref r) => r.snapper_serialize(&value, &row, books, false),
+                &CircularIngredient::Ref(ref r) => r.snapper_serialize(&value, &row, books, false),
             },
         }
     }
 
     /// Let the ingredient determine the value of the field to insert into the database when deserializing
-    fn snapper_deserialize(&self, value: FieldValue, row: Row, books: &BookKeeper) -> Option<DeserializedValue> {
+    fn snapper_deserialize(&self, value: &FieldValue, row: &Row, books: &BookKeeper) -> Option<DeserializedValue> {
         match &self.config.ingredient {
-            &CircularIngredient::Value(ref v) => v.snapper_deserialize(value, row, books),
-            &CircularIngredient::Raw(ref r) => r.snapper_deserialize(value, row, books),
-            &CircularIngredient::Ref(ref r) => r.snapper_deserialize(value, row, books),
+            &CircularIngredient::Value(ref v) => v.snapper_deserialize(&value, &row, books),
+            &CircularIngredient::Raw(ref r) => r.snapper_deserialize(&value, &row, books),
+            &CircularIngredient::Ref(ref r) => r.snapper_deserialize(&value, &row, books),
         }
     }
 
